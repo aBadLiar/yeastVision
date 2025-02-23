@@ -5,6 +5,59 @@ import numpy as np
 import pandas as pd
 import sys
 import os
+import cv2
+import natsort
+
+def preprocessing_img(image):
+        
+    # Resize image to 128 x 128 pixels (adjust?)
+    
+    resized_img = cv2.resize(image, (128, 128))
+      
+    tmp_img = np.zeros(resized_img.shape, resized_img.dtype)
+      
+    alpha = 1.0 # Contrast (adjust)
+    beta = 0 # Brightness (adjust?)
+        
+    # Enhance contrast for images with linear transformation 
+        
+    for y in range(resized_img.shape[0]):
+        for x in range(resized_img.shape[1]):
+            for c in range(resized_img.shape[2]):
+                tmp_img[y, x, c] = np.clip(alpha * resized_img[y, x, c] + beta, 0, 255)
+                
+    return tmp_img
+    
+def preprocessing_dir(directory):
+
+    imgs_list = []
+
+    # List with the names of the images
+    
+    imagesList = listdir(directory)
+    
+    # Make sure that the images are sorted in ascending order
+    
+    imagesList = natsort.natsorted(imagesList)
+
+    # Read the images
+    
+    for i in range(len(imagesList)):
+        tmp_img = cv2.imread(os.path.join(directory, imagesList[i]))
+        
+        # Preprocessing for each image in ditrectory 
+        
+        preprocessed_img = preprocessing_img(tmp_img)
+                    
+        # Convert the images to numpy arrays
+        
+        img_arr = np.array(preprocessed_img)
+        imgs_list.append(img_arr/255.)
+
+     # Convert the lists to numpy arrays
+     imgs = np.asarray(imgs_list)
+
+     return imgs
 
 # Check that file is in specified directory
 
@@ -116,6 +169,11 @@ def main():
             
             if found == True:
                 loop = 1
+                directory = os.path.join(path, nameF)
+                
+                # Preprocess all images in directory
+                
+                preprocessed_imgs = preprocessing_dir(directory)
     
     # Picture option selected 
     
@@ -131,6 +189,7 @@ def main():
         
             loop2 = 0
             ext = ""
+            fullnameP = ""
             
             # Loop until user selects valid image file extension
             
@@ -175,6 +234,8 @@ def main():
            
            if found == True:
                 loop = 1
+                picture_path = os.path.join(path, fullnameP)
+                image = preprocessing_img(picture_path)
            
 if __name__ == "__main__":
     main()
